@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murmur</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<canvas id="bg" class="fx" aria-hidden="true"></canvas>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<main id="home" hidden>
+  <div class="landing">
+    <div class="landing-copy">
+      <p class="eyebrow">Murmur</p>
+      <h1>Code together with your friends' agents.</h1>
+      <p class="muted lede">Everyone's computer stays in sync, live. No account, no GitHub.</p>
+      <ol class="steps" id="h-steps">
+        <li><b>Pick your name</b><span class="muted"> so friends know it's you</span></li>
+        <li><b>Start or join</b><span class="muted"> a room with a link</span></li>
+        <li><b>Add an agent</b><span class="muted"> and @mention it</span></li>
+      </ol>
+      <label class="who">Your name <input id="h-name" maxlength="32" placeholder="e.g. gio" autocomplete="nickname"></label>
+      <p class="err" id="h-err" role="alert"></p>
+    </div>
+    <div class="landing-slot cards">
+      <div class="card rejoin" id="h-last" hidden>
+        <h2>Rejoin <span id="h-last-name"></span></h2>
+        <p class="mono muted" id="h-last-folder"></p>
+        <button class="big" id="h-rejoin">Rejoin room</button>
+      </div>
+      <form class="card" id="f-create">
+        <h2>Start a room</h2>
+        <p>Share a folder on this computer. You get a link to send to friends.</p>
+        <label>Room name <input name="room" maxlength="60" placeholder="my project"></label>
+        <label>Project folder <span class="pick"><input type="hidden" name="folder"><button type="button" class="choose">Choose folder</button></span></label>
+        <label title="How many times agents can @mention each other before the room pauses for a person">Agent reply limit
+          <span class="hops" id="c-hops"><input type="number" min="0" max="1000" step="1" value="4" aria-label="Agent reply limit"><button type="button" class="ghost inf" aria-pressed="false">∞ Unlimited</button></span></label>
+        <button class="big">Start room</button>
+      </form>
+      <form class="card" id="f-join">
+        <h2>Join a room</h2>
+        <p>Paste the link a friend sent. Their files download to a folder here and stay in sync.</p>
+        <label>Invite link <input name="link" required placeholder="http://192.168.1.5:7440/r/…"></label>
+        <label>Save room files to <span class="pick"><input type="hidden" name="folder"><button type="button" class="choose" data-empty="~/Murmur/&lt;room&gt; (default)">~/Murmur/&lt;room&gt; (default)</button></span></label>
+        <button class="big">Join room</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<div id="room" hidden>
+  <header>
+    <div class="brand small"><span class="mark"></span>murmur</div>
+    <div class="rname" id="r-name"></div>
+    <span class="live down" id="r-conn" title="Live connection"></span>
+    <span class="hops" id="r-hops" title="Agent replies before the room pauses for a person"><span class="muted">Agent replies</span><input type="number" min="0" max="1000" step="1" aria-label="Agent reply limit"><button type="button" class="ghost inf" aria-pressed="false">∞</button></span>
+    <button class="ghost" id="r-invite" title="Copy the invite link">Copy invite link</button>
+    <div class="people" id="r-people"></div>
+    <button class="ghost" id="r-leave">Leave</button>
+  </header>
+  <aside class="left">
+    <section>
+      <div class="sh">Agents <button class="tiny" id="a-add-btn">+ Add</button></div>
+      <form id="a-form" hidden>
+        <input name="name" maxlength="32" placeholder="Name, e.g. Claude" required pattern="[A-Za-z0-9_\-]+" title="letters, numbers, - or _">
+        <select name="cli" id="a-cli"></select>
+        <input name="cmd" id="a-cmd" placeholder="mycli --flag {promptfile}" hidden>
+        <div id="a-mx" class="mx" hidden>
+          <label>Model <select name="model" id="a-model"></select></label>
+          <input name="modelOther" id="a-model-other" placeholder="exact model id" hidden>
+          <label>Effort <select name="effort" id="a-effort"></select></label>
+          <p class="hint warn" id="a-mwarn" hidden></p>
+        </div>
+        <label class="chk" title="Off: the agent edits files but cannot run commands, so no tests or scripts on this computer."><input type="checkbox" name="fullAccess"> Let it use my computer (run commands &amp; tests)</label>
+        <div class="row"><button type="button" class="ghost" id="a-cancel">Cancel</button><button>Add agent</button></div>
+        <p class="hint">Runs on this computer with your own CLI login. Others can talk to it with @Name.</p>
+      </form>
+      <ul id="a-list" class="agents"></ul>
+    </section>
+    <section>
+      <div class="sh">People &amp; folders</div>
+      <ul id="p-list" class="folders"></ul>
+    </section>
+    <section class="grow">
+      <div class="sh">Files <span class="muted" id="f-count"></span></div>
+      <div id="f-tree" class="tree"></div>
+    </section>
+  </aside>
+  <section class="hive">
+    <div class="sh">Hive <span class="muted">humans and agents, live</span></div>
+    <ol id="feed" class="feed"></ol>
+    <div id="typing" class="typing"></div>
+    <form id="say" class="say">
+      <details id="say-to" class="to-pick"><summary title="Send to">Everyone</summary><div id="say-to-list" class="to-list"></div></details>
+      <div class="say-in">
+        <textarea id="say-text" rows="2" placeholder="Message the room. @Name wakes an agent, @all wakes every agent."></textarea>
+        <ul id="mention" class="mention" role="listbox" hidden></ul>
+      </div>
+      <button>Send</button>
+    </form>
+  </section>
+  <section class="code">
+    <div class="sh"><span id="c-path">No file open</span> <span class="muted" id="c-by"></span>
+      <span id="c-follow" class="follow" hidden><span id="c-follow-nm"></span><button class="tiny" id="c-unfollow">Stop</button></span></div>
+    <div id="c-body" class="cbody"><p class="empty">Pick a file on the left. It updates live as people and agents edit it.</p></div>
+  </section>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

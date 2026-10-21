@@ -1,0 +1,28 @@
+{
+  "name": "murmur",
+  "version": "0.1.0",
+  "description": "Self-hosted multiplayer Claude Code: hub, node daemon, coordination MCP, web UI",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "murmur": "src/cli.ts",
+    "murmur-hub": "src/hub/main.ts",
+    "murmur-room": "src/room/main.ts"
+  },
+  "scripts": {
+    "start": "node src/room/main.ts",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
+    "hub": "node src/hub/main.ts",
+    "classic": "node src/app.ts"
+  },
+  "dependencies": {
+    "@highlightjs/cdn-assets": "^11.12.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "shell-quote": "^1.12.0",
+    "ws": "^8.22.0",
+    "zod": "^4.6.7"
+  }
+}
