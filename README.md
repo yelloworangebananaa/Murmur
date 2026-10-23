@@ -33,7 +33,7 @@ Every person does this once, on their own computer.
 **3. Get Murmur and start it:**
 
 ```sh
-git clone https://github.com/<you>/<repo>.git murmur
+git clone https://github.com/yelloworangebananaa/Murmur.git murmur
 cd murmur
 npm install
 npm start
